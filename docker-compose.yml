@@ -1,0 +1,56 @@
+version: "3.7"
+services:
+  app:
+    build:
+      args:
+        user: dev
+        uid: 1000
+      context: ./
+      dockerfile: ./Dockerfile
+    image: faisal-crm:1.0
+    container_name: app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    extra_hosts:
+      - "faisal-crm:127.0.0.1"
+    hostname: "faisal-crm"
+    domainname: "test"
+    ports:
+      - "80:80"
+    volumes:
+      - ./:/var/www/html
+      - ./docker-compose/server/apache2.conf:/etc/apache2/apache2.conf
+      - ./docker-compose/server/000-default.conf:/etc/apache2/sites-available/000-default.conf
+      - ./docker-compose/php/opcache.ini:/usr/local/etc/php/conf.d/docker-php-ext-opcache.ini
+    networks:
+      - faisal-crm
+
+  db:
+    image: mysql:8
+    container_name: db
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./docker-compose/mysql:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_USER: ${DB_USERNAME}
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    networks:
+      - faisal-crm
+
+  mailer:
+    image: mailhog/mailhog:latest
+    container_name: mailer
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - faisal-crm
+networks:
+  faisal-crm:
+    driver: bridge
